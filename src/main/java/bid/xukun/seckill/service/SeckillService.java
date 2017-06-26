@@ -6,6 +6,7 @@ import bid.xukun.seckill.dto.Exposer;
 import bid.xukun.seckill.dto.SeckillExecution;
 import bid.xukun.seckill.entity.Seckill;
 import bid.xukun.seckill.exception.RepeatKillException;
+import bid.xukun.seckill.exception.SeckillCloseException;
 import bid.xukun.seckill.exception.SeckillException;
 
 /**
@@ -47,5 +48,5 @@ public interface SeckillService {
 	 * @return
 	 */
 	SeckillExecution executeSeckill(int id, String userPhone, String md5)
-			throws SeckillException, RepeatKillException, SeckillException;
+			throws SeckillException, RepeatKillException, SeckillCloseException;
 }

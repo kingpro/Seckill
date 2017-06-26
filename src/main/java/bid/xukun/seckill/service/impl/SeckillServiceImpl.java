@@ -33,6 +33,7 @@ public class SeckillServiceImpl implements SeckillService {
 	@Autowired
 	private SeckillSuccessDAO seckillSuccessDAO;
 
+	// MD5盐值字符串，用于混淆MD5
 	private String slat = "fjaksln^&$%^#(*&JDFAKLDe472389";
 
 	@Override
@@ -74,8 +75,7 @@ public class SeckillServiceImpl implements SeckillService {
 	 * 2.保证事务方法的执行时间尽可能短，不要穿插其他网络操作PRC/HTTP请求或者剥离到事务方法外部。
 	 * 3.不是所有的方法都需要事务，如只要一条修改操作，只读操作不需要事务控制
 	 */
-	public SeckillExecution executeSeckill(int id, String userPhone, String md5)
-			throws SeckillException, RepeatKillException, SeckillException {
+	public SeckillExecution executeSeckill(int id, String userPhone, String md5) {
 		if (null != md5 && !"".equals(md5) && !md5.equals(getMD5(id))) {
 			throw new SeckillException("seckill data rewrite");
 		}

@@ -9,7 +9,7 @@ package bid.xukun.seckill.dto;
 public class Exposer {
 
 	// 是否开启秒杀
-	private boolean isExposed;
+	private boolean exposed;
 
 	// 一种加密措施
 	private String md5;
@@ -28,14 +28,14 @@ public class Exposer {
 
 	public Exposer(boolean isExposed, String md5, int id) {
 		super();
-		this.isExposed = isExposed;
+		this.exposed = isExposed;
 		this.md5 = md5;
 		this.id = id;
 	}
 
 	public Exposer(boolean isExposed, int id, long now, long start, long end) {
 		super();
-		this.isExposed = isExposed;
+		this.exposed = isExposed;
 		this.id = id;
 		this.now = now;
 		this.start = start;
@@ -44,16 +44,16 @@ public class Exposer {
 
 	public Exposer(boolean isExposed, int id) {
 		super();
-		this.isExposed = isExposed;
+		this.exposed = isExposed;
 		this.id = id;
 	}
 
 	public boolean isExposed() {
-		return isExposed;
+		return exposed;
 	}
 
 	public void setExposed(boolean isExposed) {
-		this.isExposed = isExposed;
+		this.exposed = isExposed;
 	}
 
 	public String getMd5() {
@@ -98,7 +98,7 @@ public class Exposer {
 
 	@Override
 	public String toString() {
-		return "Exposer [isExposed=" + isExposed + ", md5=" + md5 + ", id=" + id + ", now=" + now + ", start=" + start
+		return "Exposer [isExposed=" + exposed + ", md5=" + md5 + ", id=" + id + ", now=" + now + ", start=" + start
 				+ ", end=" + end + "]";
 	}
 

@@ -5,9 +5,9 @@
 <mapper namespace="bid.xukun.seckill.dao.SeckillSuccessDAO">
 
 	<insert id="insertSeckillSuccess">
-		insert into seckill_success
-		(seckill_id,userphone,state) values
-		(#{seckillId},#{userphone},0)
+		insert ignore into seckill_success
+		(seckill_id,userPhone,state) values
+		(#{seckillId},#{userPhone},0)
 	</insert>
 
 	<select id="queryByIdWithSeckill" resultType="SeckillSuccess">
@@ -23,7 +23,7 @@
 		seckill s on sk.seckill_id = s.id
 		where sk.seckill_id =
 		#{seckillId} and
-		sk.userphone=#{userphone}
+		sk.userphone=#{userPhone}
 	</select>
 
 </mapper>

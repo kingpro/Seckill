@@ -13,7 +13,7 @@ public interface SeckillSuccessDAO {
 	 * @param killTime
 	 * @return
 	 */
-	int insertSeckillSuccess(@Param("seckillId") int seckillId, @Param("userphone") String userphone);
+	int insertSeckillSuccess(@Param("seckillId") int seckillId, @Param("userPhone") String userPhone);
 
 	/**
 	 * 根据id查询秒杀成功对象
@@ -21,6 +21,6 @@ public interface SeckillSuccessDAO {
 	 * @param seckillId
 	 * @return
 	 */
-	SeckillSuccess queryByIdWithSeckill(@Param("seckillId") int seckillId, @Param("userphone") String userphone);
+	SeckillSuccess queryByIdWithSeckill(@Param("seckillId") int seckillId, @Param("userPhone") String userPhone);
 
 }
