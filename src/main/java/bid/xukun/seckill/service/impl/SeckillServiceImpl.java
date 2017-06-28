@@ -1,8 +1,11 @@
 package bid.xukun.seckill.service.impl;
 
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
+import org.apache.commons.collections.MapUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -12,6 +15,7 @@ import org.springframework.util.DigestUtils;
 
 import bid.xukun.seckill.dao.SeckillDAO;
 import bid.xukun.seckill.dao.SeckillSuccessDAO;
+import bid.xukun.seckill.dao.cache.RedisDAO;
 import bid.xukun.seckill.dto.Exposer;
 import bid.xukun.seckill.dto.SeckillExecution;
 import bid.xukun.seckill.entity.Seckill;
@@ -33,6 +37,9 @@ public class SeckillServiceImpl implements SeckillService {
 	@Autowired
 	private SeckillSuccessDAO seckillSuccessDAO;
 
+	@Autowired
+	private RedisDAO redisDAO;
+
 	// MD5盐值字符串，用于混淆MD5
 	private String slat = "fjaksln^&$%^#(*&JDFAKLDe472389";
 
@@ -43,7 +50,18 @@ public class SeckillServiceImpl implements SeckillService {
 
 	@Override
 	public Seckill getSeckillById(int id) {
-		return seckillDAO.queryById(id);
+		// 缓存优化
+		// 1.访问Redis
+		Seckill seckill = redisDAO.getSeckill(id);
+		if (seckill == null) {
+			// 2.访问数据库
+			seckill = seckillDAO.queryById(id);
+			if (seckill != null) {
+				// 3.放入Redis
+				redisDAO.putSeckill(seckill);
+			}
+		}
+		return seckill;
 	}
 
 	@Override
@@ -79,19 +97,20 @@ public class SeckillServiceImpl implements SeckillService {
 		if (null != md5 && !"".equals(md5) && !md5.equals(getMD5(id))) {
 			throw new SeckillException("seckill data rewrite");
 		}
+		// 执行秒杀逻辑：减库存+记录购买行为
 		try {
-			// 执行秒杀逻辑：减库存+记录购买行为
-			Date nowTime = new Date();
-			int updateCount = seckillDAO.reduceNumber(id, nowTime);
-			if (updateCount <= 0) {
-				// 没有更新到记录，秒杀结束
-				throw new SeckillCloseException("seckill is closed");
+			// 记录购买行为
+			int insertCount = seckillSuccessDAO.insertSeckillSuccess(id, userPhone);
+			if (insertCount <= 0) {
+				// 重复秒杀
+				throw new RepeatKillException("seckill repeat");
 			} else {
-				// 记录购买行为
-				int insertCount = seckillSuccessDAO.insertSeckillSuccess(id, userPhone);
-				if (insertCount <= 0) {
-					// 重复秒杀
-					throw new RepeatKillException("seckill repeat");
+				// 减库存
+				Date nowTime = new Date();
+				int updateCount = seckillDAO.reduceNumber(id, nowTime);
+				if (updateCount <= 0) {
+					// 没有更新到记录，秒杀结束
+					throw new SeckillCloseException("seckill is closed");
 				} else {
 					// 秒杀成功
 					SeckillSuccess seckillSuccess = seckillSuccessDAO.queryByIdWithSeckill(id, userPhone);
@@ -106,6 +125,34 @@ public class SeckillServiceImpl implements SeckillService {
 			Logger.error(e.getMessage(), e);
 			// 所有编译期的异常，转换为运行期异常
 			throw new SeckillException("seckill inner error:" + e.getMessage());
+		}
+	}
+
+	@Override
+	public SeckillExecution executeSeckillProcedure(int id, String userPhone, String md5) {
+		if (null != md5 && !"".equals(md5) && !md5.equals(getMD5(id))) {
+			return new SeckillExecution(id, SeckillStateEnum.DATA_REWRITE);
+		}
+		Date killTime = new Date();
+		Map<String, Object> paramMap = new HashMap<String, Object>();
+		paramMap.put("seckillId", id);
+		paramMap.put("userPhone", userPhone);
+		paramMap.put("killTime", killTime);
+		paramMap.put("result", null);
+		// 执行存储过程，result被赋值
+		try {
+			seckillDAO.killByProcedure(paramMap);
+			// 获取result
+			int result = MapUtils.getInteger(paramMap, "result", -2);
+			if (result == 1) {
+				SeckillSuccess seckillSuccess = seckillSuccessDAO.queryByIdWithSeckill(id, userPhone);
+				return new SeckillExecution(id, SeckillStateEnum.SUCCESS, seckillSuccess);
+			} else {
+				return new SeckillExecution(id, SeckillStateEnum.stateOf(result));
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+			return new SeckillExecution(id, SeckillStateEnum.INNER_ERROR);
 		}
 	}
 
