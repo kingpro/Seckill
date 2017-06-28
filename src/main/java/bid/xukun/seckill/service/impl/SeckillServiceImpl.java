@@ -128,6 +128,9 @@ public class SeckillServiceImpl implements SeckillService {
 		}
 	}
 
+	/**
+	 * 调用存储过程
+	 */
 	@Override
 	public SeckillExecution executeSeckillProcedure(int id, String userPhone, String md5) {
 		if (null != md5 && !"".equals(md5) && !md5.equals(getMD5(id))) {
